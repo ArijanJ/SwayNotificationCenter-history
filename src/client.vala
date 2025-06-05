@@ -1,3 +1,5 @@
+using SwayNotificationCenter;
+
 public struct SwayncDaemonData {
     public bool dnd;
     public bool cc_open;
@@ -76,6 +78,7 @@ private void print_help (string[] args) {
     print ("  -s, \t --subscribe \t\t\t Subscribe to notification add and close events\n");
     print ("  -swb,  --subscribe-waybar \t\t Subscribe to notification add and close events "
            + "with waybar support. Read README for example\n");
+    print ("  -sh, \t --show-history \t\t Show historical notifications\n");
 }
 
 private void on_subscribe (uint count, bool dnd, bool cc_open, bool inhibited) {
@@ -269,6 +272,43 @@ public int command_line (string[] args) {
                     print_subscribe_waybar,
                     print_subscribe_waybar);
                 loop.run ();
+                break;
+            case "--show-history":
+            case "-sh":
+                try {
+                    var db_manager = DatabaseManager.get_instance();
+                    var notifications = db_manager.get_notifications(25, 0);
+
+                    if (notifications.length() == 0) {
+                        print("No historical notifications found.\n");
+                        break;
+                    }
+
+                    print("\n=== Last 25 Notifications ===\n\n");
+
+                    foreach (var noti in notifications) {
+                        var dtime = new DateTime.from_unix_local(noti.time);
+                        string time_str = dtime.format("%Y-%m-%d %H:%M:%S");
+
+                        print("ID: %u\n", noti.applied_id);
+                        print("Time: %s\n", time_str);
+                        print("App: %s\n", noti.app_name);
+                        print("Summary: %s\n", noti.summary);
+                        if (noti.body != "") {
+                            print("Body: %s\n", noti.body);
+                        }
+                        print("Urgency: %s\n", noti.urgency.to_string());
+                        if (noti.category != null) {
+                            print("Category: %s\n", noti.category);
+                        }
+                        if (noti.desktop_entry != null) {
+                            print("Desktop Entry: %s\n", noti.desktop_entry);
+                        }
+                        print("\n");
+                    }
+                } catch (Error e) {
+                    stderr.printf("Error accessing notification history: %s\n", e.message);
+                }
                 break;
             default:
                 print_help (args);

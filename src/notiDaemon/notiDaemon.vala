@@ -159,6 +159,9 @@ namespace SwayNotificationCenter {
                 hints,
                 expire_timeout);
 
+            // Log the notification to the database
+            DatabaseManager.get_instance().log_notification(param);
+
             // The notification visibility state
             NotificationStatusEnum state = NotificationStatusEnum.ENABLED;
             unowned OrderedHashTable<NotificationVisibility> visibilities =
